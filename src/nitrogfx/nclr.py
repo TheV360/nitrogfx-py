@@ -6,10 +6,11 @@ import nitrogfx.util as util
 class NCLR:
   "Class for representing NCLR palette files"
 
-  def __init__(self, is8bpp=True, ncpr=False):
+  def __init__(self, is8bpp=True, ncpr=False, /, trans: int | None = None):
     self.colors = []  # list of (r,g,b) tuples in range 0-255
     self.ncpr = ncpr  # affects the header"
     self.is8bpp = is8bpp
+    self.trans = trans
 
   def pack(self) -> bytes:
     """Pack NCLR into bytes.
@@ -70,11 +71,11 @@ class NCLR:
     return f"<NCLR ({self.ncpr}, {self.is8bpp}) with {len(self.colors)} colors>"
 
   @staticmethod
-  def get_monochrome_nclr() -> "NCLR":
+  def get_monochrome_nclr(trans: int | None = None) -> "NCLR":
     """Creates a 256-color monochrome palette which can be used as a placeholder
     when a proper palette is not available.
     :return: NCLR object
     """
-    pal = NCLR()
+    pal = NCLR(trans=trans)
     pal.colors = [(i & 0xF8, i & 0xF8, i & 0xF8) for i in range(256)]
     return pal

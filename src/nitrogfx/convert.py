@@ -104,17 +104,27 @@ def png_to_nscr(png_name: str, bpp: int = 8, use_flipping: bool = True) -> tuple
   return img_to_nscr(Image.open(png_name), bpp, use_flipping)
 
 
-def nclr_to_imgpal(nclr: NCLR, index: int = 0) -> list[int]:
+def nclr_to_imgpal(nclr: NCLR, index: int = 0) -> tuple[list[int], str]:
   """Creates Pillow Image color table from NCLR palette.
   :param nclr: NCLR object
   :return: RGB array compatible with Image.putpalette
   """
-  result = []
-  for color in nclr.colors[index * 16 : 0x100 + index * 16]:
-    result.append(color[0])
-    result.append(color[1])
-    result.append(color[2])
-  return result
+  colors_it = nclr.colors[index * 16 : 0x100 + index * 16]
+  if nclr.trans is None:
+    return [
+      component for entry in (
+        color[0:3] for color in colors_it
+      ) for component in entry
+    ], "RGB"
+  else:
+    return [
+      component for entry in (
+        (
+          color[0], color[1], color[2],
+          0 if nclr.trans == color_index else 255
+        ) for color_index, color in enumerate(colors_it)
+      ) for component in entry
+    ], "RGBA"
 
 
 def ncgr_to_img(ncgr: NCGR, nclr: NCLR = NCLR.get_monochrome_nclr()) -> Image.Image:

@@ -34,7 +34,7 @@ class NCGR:
 
   def __init__(self, bpp: int = 4):
     self.bpp = bpp  # bits per pixel (4 or 8)
-    self.tiles = []  # each tile is a list of 64 ints
+    self.tiles: list[Tile] = []  # each tile is a list of 64 ints
     self.width = 0  # in tiles
     self.height = 0  # in tiles
     self.ncbr = False  # is file encoded as NCBR
@@ -79,11 +79,11 @@ class NCGR:
         tiledata += self.__pack_tile(tile)
     if not has_sopc:
       return header + header2 + tiledata
-    sopc = "SOPC".encode("ascii") + bytes([0x10, 0, 0, 0, 0, 0, 0, 0, 0x20, 0]) + struct.pack("<H", self.height)
+    sopc = b"SOPC" + bytes([0x10, 0, 0, 0, 0, 0, 0, 0, 0x20, 0]) + struct.pack("<H", self.height)
     return header + header2 + tiledata + sopc
 
   def __pack_ncbr(self) -> bytes:
-    tile_pixels = list(map(lambda t: t.get_data(), self.tiles))
+    tile_pixels = list(t.get_data() for t in self.tiles)
     data = c_ext.pack_ncbr_tiles(tile_pixels, self.width, self.height)
     if self.bpp == 4:
       return c_ext._8bpp_to_4bpp(data)

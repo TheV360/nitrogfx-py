@@ -213,6 +213,6 @@ class TileCanvas:
 
   def as_img(self, nclr: NCLR) -> Image.Image:
     img = Image.frombytes("P", (self.w, self.h), bytes(self.data))
-    pal = nitrogfx.convert.nclr_to_imgpal(nclr) # type: ignore
-    img.putpalette(pal)
+    pal, palmode = nitrogfx.convert.nclr_to_imgpal(nclr) # type: ignore
+    img.putpalette(pal, palmode)
     return img

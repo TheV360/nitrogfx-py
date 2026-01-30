@@ -9,20 +9,28 @@ class NCER:
   def __init__(self):
     self.cells: list[Cell] = []  # list of Cell objects
     self.labels: list[str] = []  # list of strings
+    self.max_x = 0
+    self.max_y = 0
+    self.min_x = 0
+    self.min_y = 0
     self.extended = True
     self.mapping_type = 0
     self.texu = 0
 
+  def calculate_bounds(self):
+    for cell in self.cells:
+      cell.calculate_bounds()
+    self.max_x = max(cell.max_x for cell in self.cells)
+    self.max_y = max(cell.max_y for cell in self.cells)
+    self.min_x = min(cell.min_x for cell in self.cells)
+    self.min_y = min(cell.min_y for cell in self.cells)
+  
   def get_size(self) -> tuple[int, int]:
     """Calculates the size of the canvas needed to draw the NCER
     :return: int tuple of (width, height)
     """
-    all_oams = [oam for cell in self.cells for oam in cell.oam]
-    max_x = max([oam.x + oam.get_size()[0] for oam in all_oams])
-    max_y = max([oam.y + oam.get_size()[1] for oam in all_oams])
-    min_x = min([oam.x for oam in all_oams])
-    min_y = min([oam.y for oam in all_oams])
-    return (max_x - min_x, max_y - min_y)
+    self.calculate_bounds()
+    return (self.max_x - self.min_x, self.max_y - self.min_y)
 
   @staticmethod
   def unpack(data: bytes) -> "NCER":
@@ -146,7 +154,7 @@ class NCER:
 
 class Cell:
   def __init__(self):
-    self.oam = []
+    self.oam: list[OAM] = []
     self.readOnly = 0
     self.max_x = 0
     self.min_x = 0
@@ -154,10 +162,22 @@ class Cell:
     self.max_y = 0
     self.partition_offset = 0
     self.partition_size = 0
+  
+  def calculate_bounds(self):
+    self.max_x = max(oam.x + oam.get_size()[0] for oam in self.oam)
+    self.max_y = max(oam.y + oam.get_size()[1] for oam in self.oam)
+    self.min_x = min(oam.x for oam in self.oam)
+    self.min_y = min(oam.y for oam in self.oam)
 
+  def get_size(self) -> tuple[int, int]:
+    self.calculate_bounds()
+    return (self.max_x - self.min_x, self.max_y - self.min_y)
+  
   def __eq__(self, other) -> bool:
     return vars(self) == vars(other)
 
+def make_signed(n: int, bits: int) -> int:
+  return n - (n >> (bits - 1) << bits)
 
 class OAM:
   "Represents an NDS OAM entry"
@@ -237,14 +257,14 @@ class OAM:
     ":return: OAM object"
     a0, a1, a2 = struct.unpack("<HHH", data)
     self = OAM()
-    self.y = a0 & 0xFF
+    self.y = make_signed(a0 & 0xFF, 8)
     self.rot = a0 & 0x100 > 0
     self.sizeDisable = a0 & 0x200 > 0
     self.mode = (a0 >> 10) & 3
     self.mosaic = (a0 >> 12) & 1 == 1
     self.colors = 256 if (a0 >> 13) & 1 == 1 else 16
     self.shape = (a0 >> 14) & 3
-    self.x = a1 & 0x1FF
+    self.x = make_signed(a1 & 0x1FF, 9)
     self.rotsca = (a1 >> 9) & 0x1F
     self.size = (a1 >> 14) & 3
     self.char = a2 & 0x3FF
