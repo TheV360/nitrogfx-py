@@ -271,7 +271,11 @@ def __oam_to_json(oam) -> dict[str, dict[str, int | bool]]:
     "RotationScaling": oam.rotsca,
     "Size": oam.size,
   }
-  attr2 = {"CharName": oam.char, "Priority": oam.prio, "Palette": oam.pal}
+  attr2 = {
+    "CharName": oam.char,
+    "Priority": oam.prio,
+    "Palette": oam.pal
+  }
   return {"Attr0": attr0, "Attr1": attr1, "Attr2": attr2}
 
 
@@ -300,7 +304,7 @@ def ncer_to_json(ncer: NCER, json_filename: str):
         "maxY": cell.max_y,
         "minX": cell.min_x,
         "minY": cell.min_y,
-        "OAM": __oam_to_json(cell.oam[0]) if len(cell.oam) == 1 else [__oam_to_json(oam) for oam in cell.oam],
+        "OAM": [__oam_to_json(oam) for oam in cell.oam],
       }
     )
   data["cells"] = cellArray
