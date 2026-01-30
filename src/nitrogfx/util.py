@@ -4,7 +4,7 @@ from PIL import Image
 
 import nitrogfx
 import nitrogfx.c_ext.tile as c_ext
-from nitrogfx.ncer import OAM
+from nitrogfx.ncer import Cell, OAM
 from nitrogfx.ncgr import NCGR, Tile
 from nitrogfx.nclr import NCLR
 from nitrogfx.nscr import MapEntry
@@ -214,15 +214,29 @@ class TileCanvas:
     tile = ncgr.tiles[map_entry.tile].flipped(map_entry.xflip, map_entry.yflip)
     c_ext.draw_tile_to_buffer(self.data, tile.get_data(), x, y, self.w)
 
+  def draw_cell(self, ncgr: NCGR, cell: Cell, x: int, y: int, as_top_left: bool = True):
+    home_x, home_y = (cell.min_x, cell.min_y) if as_top_left else (0, 0)
+    for entry in cell.oam:
+      self.draw_bitmap(ncgr, entry, x + entry.x - home_x, y + entry.y - home_y)
+
   def draw_bitmap(self, ncgr: NCGR, entry: OAM, x: int, y: int):
     width, height = entry.get_size()
-    src_data = iter(byte for data in map(lambda t: t.get_data(), ncgr.tiles[entry.char << 1:]) for byte in data)
+    # TODO: ok, cool that this index works. but why?
+    tile_start = (entry.char << (8 // ncgr.bpp))
+    flat_tile_data = iter(
+      byte for data in (
+        t.get_data() for t in ncgr.tiles[tile_start:]
+      ) for byte in data
+    )
     for j in range(height):
       start_index = self.index_of(x, y + j)
       end_index = start_index + width
-      assert self.w >= x + width, "width overflows"
-      assert len(self.data) >= end_index, f"{len(self.data):x} is not big enough to hold a bitmap that starts at {start_index:x} and goes to {end_index:x}"
-      self.data[start_index:end_index] = bytes(next(src_data) for _ in range(width))
+      assert self.w >= x + width, "width would overflow onto next line"
+      assert len(self.data) >= end_index, \
+        f"{len(self.data):x} is not big enough to hold a bitmap" \
+        f" that starts at {start_index:x} and goes to {end_index:x}"
+      bitmap_data = bytes(next(flat_tile_data) for _ in range(width))
+      self.data[start_index:end_index] = bitmap_data
 
   def as_img(self, nclr: NCLR) -> Image.Image:
     img = Image.frombytes("P", (self.w, self.h), bytes(self.data))

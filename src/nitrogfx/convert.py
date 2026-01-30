@@ -202,11 +202,8 @@ def nscr_to_png(img_name: str, ncgr: NCGR, nscr: NSCR, nclr: NCLR = NCLR.get_mon
 
 def ncer_to_img(ncer_cell: Cell, ncgr: NCGR, nclr: NCLR = NCLR.get_monochrome_nclr()):
   width, height = ncer_cell.get_size()
-  off_x, off_y = (-ncer_cell.min_x, -ncer_cell.min_y)
   canvas = TileCanvas(width, height)
-  for entry in ncer_cell.oam:
-    x, y = entry.x + off_x, entry.y + off_y
-    canvas.draw_bitmap(ncgr, entry, x, y)
+  canvas.draw_cell(ncgr, ncer_cell, 0, 0, as_top_left=True)
   return canvas.as_img(nclr)
 
 
