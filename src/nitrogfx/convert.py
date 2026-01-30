@@ -200,6 +200,16 @@ def nscr_to_png(img_name: str, ncgr: NCGR, nscr: NSCR, nclr: NCLR = NCLR.get_mon
   nscr_to_img(ncgr, nscr, nclr).save(img_name, "PNG")
 
 
+def ncer_to_img(ncer_cell: Cell, ncgr: NCGR, nclr: NCLR = NCLR.get_monochrome_nclr()):
+  width, height = ncer_cell.get_size()
+  off_x, off_y = (-ncer_cell.min_x, -ncer_cell.min_y)
+  canvas = TileCanvas(width, height)
+  for entry in ncer_cell.oam:
+    x, y = entry.x + off_x, entry.y + off_y
+    canvas.draw_bitmap(ncgr, entry, x, y)
+  return canvas.as_img(nclr)
+
+
 def json_to_ncer(filename: str) -> NCER:
   """Reads NCER data from a JSON file. Counterpart to ncer_to_json.
   :param filename: Path to JSON file

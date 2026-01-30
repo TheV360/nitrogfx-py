@@ -4,6 +4,7 @@ from PIL import Image
 
 import nitrogfx
 import nitrogfx.c_ext.tile as c_ext
+from nitrogfx.ncer import OAM
 from nitrogfx.ncgr import NCGR, Tile
 from nitrogfx.nclr import NCLR
 from nitrogfx.nscr import MapEntry
@@ -200,6 +201,8 @@ class TileCanvas:
     self.h = height
     self.data = bytearray(width * height)
 
+  def index_of(self, x: int, y: int) -> int: return y * self.w + x
+
   def draw_tile(self, ncgr: NCGR, map_entry: MapEntry, x: int, y: int):
     """Draws a tile on an Indexed Pillow Image.
     :param pixels: Pillow Image pixels obtained with Image.load()
@@ -210,6 +213,16 @@ class TileCanvas:
     """
     tile = ncgr.tiles[map_entry.tile].flipped(map_entry.xflip, map_entry.yflip)
     c_ext.draw_tile_to_buffer(self.data, tile.get_data(), x, y, self.w)
+
+  def draw_bitmap(self, ncgr: NCGR, entry: OAM, x: int, y: int):
+    width, height = entry.get_size()
+    src_data = iter(byte for data in map(lambda t: t.get_data(), ncgr.tiles[entry.char << 1:]) for byte in data)
+    for j in range(height):
+      start_index = self.index_of(x, y + j)
+      end_index = start_index + width
+      assert self.w >= x + width, "width overflows"
+      assert len(self.data) >= end_index, f"{len(self.data):x} is not big enough to hold a bitmap that starts at {start_index:x} and goes to {end_index:x}"
+      self.data[start_index:end_index] = bytes(next(src_data) for _ in range(width))
 
   def as_img(self, nclr: NCLR) -> Image.Image:
     img = Image.frombytes("P", (self.w, self.h), bytes(self.data))
