@@ -71,7 +71,18 @@ class NCLR:
     return f"<NCLR ({self.ncpr}, {self.is8bpp}) with {len(self.colors)} colors>"
 
   @staticmethod
-  def get_monochrome_nclr(trans: int | None = None) -> "NCLR":
+  def get_monochrome_nclr(*, bpp: int = 8, trans: int | None = None) -> "NCLR":
+    if bpp == 4: return NCLR.get_4bpp_monochrome_nclr(trans)
+    return NCLR.get_8bpp_monochrome_nclr(trans)
+  
+  @staticmethod
+  def get_4bpp_monochrome_nclr(trans: int | None = None) -> "NCLR":
+    pal = NCLR(trans=trans)
+    pal.colors = [(i & 0xF8, i & 0xF8, i & 0xF8) for i in range(0, 256, 16)]
+    return pal
+
+  @staticmethod
+  def get_8bpp_monochrome_nclr(trans: int | None = None) -> "NCLR":
     """Creates a 256-color monochrome palette which can be used as a placeholder
     when a proper palette is not available.
     :return: NCLR object

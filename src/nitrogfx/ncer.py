@@ -20,10 +20,10 @@ class NCER:
   def calculate_bounds(self):
     for cell in self.cells:
       cell.calculate_bounds()
-    self.max_x = max(cell.max_x for cell in self.cells)
-    self.max_y = max(cell.max_y for cell in self.cells)
-    self.min_x = min(cell.min_x for cell in self.cells)
-    self.min_y = min(cell.min_y for cell in self.cells)
+    self.max_x = max((cell.max_x for cell in self.cells), default=0)
+    self.max_y = max((cell.max_y for cell in self.cells), default=0)
+    self.min_x = min((cell.min_x for cell in self.cells), default=0)
+    self.min_y = min((cell.min_y for cell in self.cells), default=0)
   
   def get_size(self) -> tuple[int, int]:
     """Calculates the size of the canvas needed to draw the NCER
@@ -164,10 +164,10 @@ class Cell:
     self.partition_size = 0
   
   def calculate_bounds(self):
-    self.max_x = max(oam.x + oam.get_size()[0] for oam in self.oam)
-    self.max_y = max(oam.y + oam.get_size()[1] for oam in self.oam)
-    self.min_x = min(oam.x for oam in self.oam)
-    self.min_y = min(oam.y for oam in self.oam)
+    self.max_x = max((oam.x + oam.get_size()[0] for oam in self.oam), default=0)
+    self.max_y = max((oam.y + oam.get_size()[1] for oam in self.oam), default=0)
+    self.min_x = min((oam.x for oam in self.oam), default=0)
+    self.min_y = min((oam.y for oam in self.oam), default=0)
 
   def get_size(self) -> tuple[int, int]:
     self.calculate_bounds()

@@ -203,7 +203,13 @@ def nscr_to_png(img_name: str, ncgr: NCGR, nscr: NSCR, nclr: NCLR = NCLR.get_mon
 def ncer_to_img(ncer_cell: Cell, ncgr: NCGR, nclr: NCLR = NCLR.get_monochrome_nclr()):
   width, height = ncer_cell.get_size()
   canvas = TileCanvas(width, height)
-  canvas.draw_cell(ncgr, ncer_cell, 0, 0, as_top_left=True)
+  if ncgr.ncbr:
+    canvas.draw_cell(ncgr, ncer_cell, 0, 0, as_top_left=True)
+  else:
+    for y in range(height // 8):
+      for x in range(width // 8):
+        entry = MapEntry(y * width + x)
+        canvas.draw_tile(ncgr, entry, x * 8, y * 8)
   return canvas.as_img(nclr)
 
 

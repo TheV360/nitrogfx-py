@@ -220,6 +220,7 @@ class TileCanvas:
       self.draw_bitmap(ncgr, entry, x + entry.x - home_x, y + entry.y - home_y)
 
   def draw_bitmap(self, ncgr: NCGR, entry: OAM, x: int, y: int):
+    assert ncgr.ncbr
     width, height = entry.get_size()
     # TODO: ok, cool that this index works. but why?
     tile_start = (entry.char << (8 // ncgr.bpp))
